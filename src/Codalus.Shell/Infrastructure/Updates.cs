@@ -34,7 +34,9 @@ internal static class Updates
         // tests) is simply not an install Velopack made.
         var installed = Velopack.Locators.VelopackLocator.IsCurrentSet && new UpdateManager(new SignedUpdateSource(store)).IsInstalled;
         var systemPackage = OperatingSystem.IsLinux() && AppContext.BaseDirectory.StartsWith("/opt/codalus/", StringComparison.Ordinal);
-        var install = new InstallInfo(ShellInfo.Version, InstallInfo.KindOf(ShellInfo.Version, installed, systemPackage));
+        // Flatpak puts /.flatpak-info at the root of every sandbox (ADR 0084).
+        var flatpak = OperatingSystem.IsLinux() && File.Exists("/.flatpak-info");
+        var install = new InstallInfo(ShellInfo.Version, InstallInfo.KindOf(ShellInfo.Version, installed, systemPackage, flatpak));
         if (installed && Velopack.Locators.VelopackLocator.Current.Channel is { Length: > 0 } channel && channel.StartsWith(Rid + "-", StringComparison.Ordinal))
         {
             install = install with { DefaultChannel = channel[(Rid.Length + 1)..] }; // the installed channel, <rid>-<kind>

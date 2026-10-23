@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The Flatpak's AppStream metadata (ADR 0084): what software centers show. -->
+<component type="desktop-application">
+  <id>io.github.stavroskasidis.Codalus</id>
+  <name>Codalus IDE</name>
+  <summary>Cross-platform, open-source IDE for .NET</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.stavroskasidis">
+    <name>Codalus IDE contributors</name>
+  </developer>
+  <description>
+    <p>
+      Codalus IDE is a .NET IDE with solutions, C# language services, build and run, debugging on netcoredbg, and Git.
+    </p>
+    <p>
+      It needs the .NET SDK in ~/.dotnet to open and build solutions; the IDE offers to install it there.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.stavroskasidis.Codalus.desktop</launchable>
+  <url type="homepage">https://stavroskasidis.com/codalus-ide/</url>
+  <url type="bugtracker">https://github.com/stavroskasidis/codalus-ide/issues</url>
+  <url type="vcs-browser">https://github.com/stavroskasidis/codalus-ide</url>
+  <categories>
+    <category>Development</category>
+    <category>IDE</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+</component>

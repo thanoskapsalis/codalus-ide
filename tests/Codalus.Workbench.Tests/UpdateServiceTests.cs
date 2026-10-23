@@ -26,6 +26,7 @@ public sealed class UpdateServiceTests
 
     [Theory]
     [InlineData(InstallKind.SystemPackage, UpdateMode.Auto)]
+    [InlineData(InstallKind.Flatpak, UpdateMode.Auto)]
     [InlineData(InstallKind.Portable, UpdateMode.Auto)]
     [InlineData(InstallKind.SelfUpdating, UpdateMode.Notify)]
     public async Task Other_installs_and_notify_mode_only_say_that_a_release_is_available(InstallKind kind, UpdateMode mode)
@@ -128,14 +129,16 @@ public sealed class UpdateServiceTests
     }
 
     [Theory]
-    [InlineData("0.2.0-dev", true, false, InstallKind.Development)]
-    [InlineData("0.2.0-dev+abc123", true, false, InstallKind.Development)]
-    [InlineData("0.2.0", true, false, InstallKind.SelfUpdating)]
-    [InlineData("0.2.0", false, true, InstallKind.SystemPackage)]
-    [InlineData("0.2.0-nightly.20261011.1", false, false, InstallKind.Portable)]
-    public void The_kind_of_install_decides_what_updating_means(string version, bool velopack, bool system, InstallKind kind)
+    [InlineData("0.2.0-dev", true, false, false, InstallKind.Development)]
+    [InlineData("0.2.0-dev+abc123", true, false, false, InstallKind.Development)]
+    [InlineData("0.2.0", true, false, false, InstallKind.SelfUpdating)]
+    [InlineData("0.2.0", false, true, false, InstallKind.SystemPackage)]
+    [InlineData("0.2.0", false, false, true, InstallKind.Flatpak)]
+    [InlineData("0.2.0-dev", false, false, true, InstallKind.Development)]
+    [InlineData("0.2.0-nightly.20261011.1", false, false, false, InstallKind.Portable)]
+    public void The_kind_of_install_decides_what_updating_means(string version, bool velopack, bool system, bool flatpak, InstallKind kind)
     {
-        Assert.Equal(kind, InstallInfo.KindOf(version, velopack, system));
+        Assert.Equal(kind, InstallInfo.KindOf(version, velopack, system, flatpak));
     }
 
     [Theory]

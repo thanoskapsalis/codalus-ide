@@ -1,6 +1,7 @@
 # 0028. Release cycle and installers
 
 - **Status:** accepted (M31, 2026-10-11; the maintainer's go-ahead to complete every milestone), amended 2026-10-13, 2026-10-14 and 2026-10-20 (the workflows: one `pipeline.yml` and `pages.yml`, and how a run stops and caches; see the updates under **Workflows**) and 2026-10-18 (the packages download from the releases; see the update under **apt and dnf repositories**) and 2026-10-21 (releases through `release/X.Y.Z` branches; see the update under **Workflows**). It replaces ADR 0009's packaging table; ADR 0009's crash reports and performance gates stand.
+- **Amended by:** [ADR 0084](0084-flatpak.md) (0.7.0: the Flatpak, a release package and gate)
 - **Date:** 2026-10-11
 - **Deciders:** maintainer (D16–D21, D27 in the roadmap's decision register)
 
@@ -67,4 +68,4 @@ M7 shipped hand-run packages (ADR 0009): a portable zip, a `.dmg`, a `.tar.gz`, 
 - The installed Windows app runs from `current\`, which Velopack replaces on every update: nothing may be written next to the executable. User data was already in the platform folders (`AppPaths` in `Codalus.Platform`).
 - The `daedalus` command from a terminal on Windows goes through `cmd`, which gives a GUI program no output handles to capture: `daedalus --version` prints to the console window, not to a pipe. Waiting and the exit code work, which is what `--wait` and `merge` need.
 - The previous dmg and appimagetool are gone; vpk brings its own AppImage runtime (THIRD-PARTY-NOTICES).
-- `TODO(issue)`: Flatpak (the manifest stays in `eng/packaging/flatpak`); Windows ARM64 and Intel Mac builds (D27); code signing when the repository goes public (D19); the winget submission to `microsoft/winget-pkgs` after the first public release.
+- `TODO(issue)`: Flatpak (the manifest stays in `eng/packaging/flatpak`; built and released since 0.7.0, [ADR 0084](0084-flatpak.md)); Windows ARM64 and Intel Mac builds (D27); code signing when the repository goes public (D19); the winget submission to `microsoft/winget-pkgs` after the first public release.

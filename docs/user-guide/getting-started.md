@@ -34,6 +34,7 @@ Every release on the [releases page](https://github.com/stavroskasidis/codalus-i
 | Linux | `.deb` and `.rpm` | Install from our apt or dnf repository, so that they update with the system (the instructions are on the [download page](https://stavroskasidis.com/codalus-ide/download/#linux)), or install the file: `sudo apt install ./codalus-<version>-linux-x64.deb`, `sudo dnf install ./codalus-<version>-linux-x64.rpm`. |
 | Linux (openSUSE) | `.rpm` | `zypper` installs from the same rpm repository (the [download page](https://stavroskasidis.com/codalus-ide/download/#zypper) has the commands), so it updates with the system. |
 | Linux (Arch) | AUR | `codalus-bin`: `yay -S codalus-bin`, or `makepkg -si` in a clone of `https://aur.archlinux.org/codalus-bin.git`. Each stable release also has its PKGBUILD (`aur-codalus-bin-<version>.zip`). |
+| Linux (Bazzite, Silverblue, SteamOS and other Flatpak systems) | `.flatpak` | `flatpak install --user ./codalus-<version>-linux-x64.flatpak`, then start Codalus IDE from your apps or with `flatpak run io.github.stavroskasidis.Codalus`. It has git built in and uses the .NET SDK in `~/.dotnet`, which the first-run setup installs there. Its terminal runs inside the sandbox, and docker and podman run on the host. It doesn't update itself yet: install the next release's file over it. |
 | Linux | `.tar.gz` | Extract it and run `codalus/codalus`. |
 
 **The installers aren't code-signed yet**, so the first start asks for confirmation:

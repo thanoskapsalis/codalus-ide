@@ -10,9 +10,9 @@ name: Pipeline
 #   branch's fixes, a hotfix) and moves past the released version.
 # - pull requests and other branches: CI only.
 # A release is atomic (the maintainer's rule, 2026-10-14): every gate runs first on the release's own commit: CI (test,
-# smoke), the packages installed and smoke-tested on every platform (packages), and for a stable release also the
-# benchmarks and the apt, dnf and zypper repositories built and installed from with the site exported (site,
-# pages.yml with deploy: false). Only when all of them pass is anything published; otherwise the tag goes.
+# smoke), the packages installed and smoke-tested on every platform (packages) and the Flatpak (flatpak), and for a
+# stable release also the benchmarks and the apt, dnf and zypper repositories built and installed from with the site
+# exported (site, pages.yml with deploy: false). Only when all of them pass is anything published; otherwise the tag goes.
 # A run stops at its first failed job, which cancels the rest (ADR 0028, 2026-10-20). A release/X.Y.Z → master pull request
 # skips test and smoke when develop's own run passed on its head (gate). A release is cut from develop as release/X.Y.Z and
 # merged into master by pull request, so develop stays open meanwhile (ADR 0028, 2026-10-21; docs/release/releasing.md).
@@ -414,6 +414,51 @@ jobs:
           echo "::error::packages (${{ matrix.rid }}) failed: the run's other jobs are cancelled."
           gh run cancel "$GITHUB_RUN_ID" -R "$GITHUB_REPOSITORY" || true
 
+  # The Flatpak (ADR 0084), from the packages job's Linux .tar.gz: built with flatpak-builder (git from source, the
+  # runtime from Flathub), installed, run and uninstalled (eng/flatpak.sh --test), then uploaded for publish beside the
+  # other packages (packages-*).
+  flatpak:
+    needs: [plan, packages]
+    if: needs.plan.outputs.kind != ''
+    permissions:
+      contents: read
+      actions: write # stopping the run at its first failure
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, rid: linux-x64 }
+          - { os: ubuntu-24.04-arm, rid: linux-arm64 }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages-${{ matrix.rid }}
+          path: packages
+      - name: Flatpak, flatpak-builder and the Flathub remote
+        # bubblewrap runs the build and the app in user namespaces, which Ubuntu 24.04's AppArmor denies to programs
+        # without a profile: allow them on this throwaway runner, as for the arm64 Chromium.
+        run: |
+          sudo apt-get update && sudo apt-get install -y flatpak flatpak-builder
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+      - name: Build, install, run and uninstall the Flatpak
+        run: bash eng/flatpak.sh --test "${{ needs.plan.outputs.version }}" packages artifacts/flatpak
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-flatpak-${{ matrix.rid }}
+          path: artifacts/flatpak/
+          if-no-files-found: error
+      - name: Stop the run at its first failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "::error::flatpak (${{ matrix.rid }}) failed: the run's other jobs are cancelled."
+          gh run cancel "$GITHUB_RUN_ID" -R "$GITHUB_REPOSITORY" || true
+
   # Self-update end to end (M32): version N and N+1 of the installer, N installed, a tampered feed refused, then N
   # updated to N+1 through a signed local feed. It builds its own test installers (eng/test-update.sh), so it runs
   # beside the packages instead of after them: the packages job was the release's longest, with it at its end.
@@ -589,12 +634,13 @@ jobs:
     secrets: inherit
 
   publish:
-    needs: [plan, test, smoke, packages, update, benchmarks, site]
-    # Every gate passed: CI, the packages and the self-update for both kinds, the benchmarks and the site too for a
-    # stable release.
+    needs: [plan, test, smoke, packages, flatpak, update, benchmarks, site]
+    # Every gate passed: CI, the packages, the Flatpak and the self-update for both kinds, the benchmarks and the site too
+    # for a stable release.
     if: >-
       !cancelled() && needs.plan.outputs.publish == 'true'
       && needs.test.result == 'success' && needs.smoke.result == 'success' && needs.packages.result == 'success'
+      && needs.flatpak.result == 'success'
       && needs.update.result == 'success'
       && (needs.plan.outputs.kind == 'nightly' || (needs.benchmarks.result == 'success' && needs.site.result == 'success'))
     runs-on: ubuntu-latest

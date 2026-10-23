@@ -1,32 +1,71 @@
-# Flatpak manifest (ADR 0009): packages the Linux release tarball. Not built in CI yet (TODO(issue)): an IDE needs the
-# host's .NET SDK and git, so it runs with --filesystem=host and talks to host tools through flatpak-spawn; that needs
-# testing before it is published on Flathub.
+# Flatpak manifest (ADR 0009, ADR 0084): packages the Linux release tarball. eng/flatpak.sh builds it in a work folder
+# that holds the tarball as codalus.tar.gz beside this folder's files, and writes a single-file bundle.
+# An IDE needs more of the computer than most apps (ADR 0084):
+# - --filesystem=host: projects can be anywhere. The host's /usr is still the runtime's, so host programs aren't on
+#   the PATH: git is built in (below), the .NET SDK comes from ~/.dotnet (codalus-flatpak.sh), and docker and podman
+#   run on the host through flatpak-spawn (host-tool.sh), which needs org.freedesktop.Flatpak.
+# - --filesystem=/tmp: the host's own /tmp, not a private one, so the paths the IDE gives host programs (a container's
+#   bind mounts) are the same on both sides.
+# - --allow=devel: the debugger (netcoredbg) uses ptrace, which the sandbox's seccomp filter otherwise refuses.
+# - org.freedesktop.secrets: SecretStorage keeps credentials in the desktop's keyring through libsecret.
+# Avalonia draws through X11 (XWayland on a Wayland desktop).
 app-id: io.github.stavroskasidis.Codalus
 runtime: org.freedesktop.Platform
-runtime-version: '24.08'
+runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
 command: codalus
 finish-args:
   - --share=ipc
   - --share=network
   - --socket=x11
-  - --socket=wayland
+  - --socket=ssh-auth
   - --device=dri
   - --filesystem=host
+  - --filesystem=/tmp
+  - --allow=devel
   - --talk-name=org.freedesktop.Flatpak
+  - --talk-name=org.freedesktop.secrets
 modules:
+  - name: git
+    config-opts:
+      - --without-tcltk
+    make-args: &git-make-args
+      - NO_PERL=1
+      - NO_PYTHON=1
+      - NO_TCLTK=1
+      - NO_RUST=1
+      - INSTALL_SYMLINKS=1
+    make-install-args: *git-make-args
+    cleanup:
+      - /share/gitweb
+      - /share/man
+    sources:
+      - type: archive
+        url: https://mirrors.edge.kernel.org/pub/software/scm/git/git-2.56.0.tar.xz
+        sha256: 26c56c296b38c0695b26fa95f475f1d01704d2d38e73465ca30b0b2f5dc789d3
+
   - name: codalus
     buildsystem: simple
     build-commands:
       - cp -R codalus /app/codalus
-      - mkdir -p /app/bin && ln -s /app/codalus/codalus /app/bin/codalus
-      - install -Dm644 codalus.desktop /app/share/applications/io.github.stavroskasidis.Codalus.desktop
+      - install -Dm755 codalus-flatpak.sh /app/bin/codalus
+      - install -Dm755 host-tool.sh /app/libexec/host-tools/docker
+      - install -Dm755 host-tool.sh /app/libexec/host-tools/podman
+      - sed -e 's/^Icon=codalus$/Icon=io.github.stavroskasidis.Codalus/' codalus.desktop > io.github.stavroskasidis.Codalus.desktop
+      - install -Dm644 io.github.stavroskasidis.Codalus.desktop -t /app/share/applications
       - install -Dm644 codalus-256.png /app/share/icons/hicolor/256x256/apps/io.github.stavroskasidis.Codalus.png
+      - install -Dm644 io.github.stavroskasidis.Codalus.metainfo.xml -t /app/share/metainfo
     sources:
       - type: archive
-        path: ../../../artifacts/packages/codalus-0.1.0-linux-x64.tar.gz
+        path: codalus.tar.gz
         strip-components: 0
       - type: file
-        path: ../linux/codalus.desktop
+        path: codalus-flatpak.sh
       - type: file
-        path: ../../../assets/logo/png/codalus-256.png
+        path: host-tool.sh
+      - type: file
+        path: codalus.desktop
+      - type: file
+        path: codalus-256.png
+      - type: file
+        path: io.github.stavroskasidis.Codalus.metainfo.xml

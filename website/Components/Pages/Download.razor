@@ -2,7 +2,7 @@
 @inject Releases Releases
 @inject SiteOptions Site
 
-<PageMeta Title="Download" Description="Download Codalus IDE for Windows, macOS and Linux: installers that update themselves, a portable zip, an AppImage, and apt and dnf repositories." />
+<PageMeta Title="Download" Description="Download Codalus IDE for Windows, macOS and Linux: installers that update themselves, a portable zip, an AppImage, a Flatpak, and apt and dnf repositories." />
 
 <div class="container">
     <section class="page-intro">
@@ -73,6 +73,9 @@
             <DownloadFile Kind="Fedora and RHEL package" Suffix="linux-x64.rpm" Arm64Suffix="linux-arm64.rpm">
                 <code>sudo dnf install ./</code> the file, or use the dnf repository below.
             </DownloadFile>
+            <DownloadFile Kind="Flatpak" Suffix="linux-x64.flatpak" Arm64Suffix="linux-arm64.flatpak">
+                For Bazzite, Silverblue, SteamOS and other systems that install apps as Flatpaks: <a href="download/#flatpak">the commands</a> are below.
+            </DownloadFile>
             <DownloadFile Kind="Tarball" Suffix="linux-x64.tar.gz" Arm64Suffix="linux-arm64.tar.gz">
                 Extract it and run <code>codalus/codalus</code>.
             </DownloadFile>
@@ -100,6 +103,11 @@
                     <h3 id="aur">Arch Linux (AUR)</h3>
                     <Commands Text="@Aur" />
                     <p>Or with an AUR helper: <code>yay -S codalus-bin</code>.</p>
+                </div>
+                <div class="card card-outline">
+                    <h3 id="flatpak">Bazzite, Silverblue and SteamOS (Flatpak)</h3>
+                    <Commands Text="@Flatpak" />
+                    <p>Its runtime comes from Flathub. It has git built in and uses the .NET SDK in <code>~/.dotnet</code>, which Codalus offers to install on first start. It doesn't update itself yet: install the next release's file the same way.</p>
                 </div>
             </div>
         </div>
@@ -164,6 +172,11 @@
     private const string Aur = """
         git clone https://aur.archlinux.org/codalus-bin.git
         cd codalus-bin && makepkg -si
+        """;
+
+    private string Flatpak => $"""
+        flatpak install --user ./{Releases.FileName("linux-x64.flatpak")}
+        flatpak run io.github.stavroskasidis.Codalus
         """;
 
     private string Source => $"""

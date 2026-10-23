@@ -15,6 +15,9 @@ public enum InstallKind
     /// <summary>A .deb or .rpm: the system's package manager updates it; the IDE only says a release is out.</summary>
     SystemPackage,
 
+    /// <summary>The Flatpak bundle (ADR 0084): Velopack can't replace <c>/app</c>; the IDE says a release is out, with a link to it.</summary>
+    Flatpak,
+
     /// <summary>The zip, the .app zip or the tar.gz: the IDE says a release is out, with a link to it.</summary>
     Portable,
 }
@@ -49,9 +52,10 @@ public sealed record InstallInfo(string Version, InstallKind Kind)
 
     public static string ChannelOf(string version) => version.Contains("-nightly.", StringComparison.Ordinal) ? Nightly : Stable;
 
-    public static InstallKind KindOf(string version, bool velopackInstalled, bool systemPackage) =>
+    public static InstallKind KindOf(string version, bool velopackInstalled, bool systemPackage, bool flatpak = false) =>
         version.EndsWith("-dev", StringComparison.Ordinal) || version.Contains("-dev+", StringComparison.Ordinal) ? InstallKind.Development
         : velopackInstalled ? InstallKind.SelfUpdating
+        : flatpak ? InstallKind.Flatpak
         : systemPackage ? InstallKind.SystemPackage
         : InstallKind.Portable;
 }

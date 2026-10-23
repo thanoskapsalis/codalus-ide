@@ -177,7 +177,7 @@ public sealed partial class ShellHost
         }
     }
 
-    /// <summary>A release the IDE doesn't download itself: notify mode, or a .deb, .rpm or portable install.</summary>
+    /// <summary>A release the IDE doesn't download itself: notify mode, or a .deb, .rpm, Flatpak or portable install.</summary>
     private async Task OfferUpdateAsync(UpdateOffer offer)
     {
         const string Download = "Download and Restart";
@@ -186,6 +186,7 @@ public sealed partial class ShellHost
         {
             InstallKind.SelfUpdating => ($"Codalus IDE {offer.Version} is available.", new[] { Download, Notes }),
             InstallKind.SystemPackage => ($"Codalus IDE {offer.Version} is available. Update it with your package manager (apt upgrade or dnf upgrade).", [Notes]),
+            InstallKind.Flatpak => ($"Codalus IDE {offer.Version} is available. Install its Flatpak from the download page.", ["Download Page"]),
             _ => ($"Codalus IDE {offer.Version} is available.", ["Download Page"]),
         };
         var choice = await Workbench.Notifications.Info(message, actions).Result.ConfigureAwait(true);
